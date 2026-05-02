@@ -1,0 +1,48 @@
+# Resenha Aula 3 — Modelos UML e Design de Componentes 
+ 
+**Aluno:** Letícia Kamille Vidal Gomes
+**Data:** 02/05/2026
+ 
+## Questão 1 — Modelos UML como ferramentas de modelagem 
+ 
+### (a) Estrutura × comportamento 
+No Capítulo 4, Seção "Diagrama de Classes", Valente explica que o diagrama de classes destaca aspectos estáticos: nomes das classes, atributos, métodos e relacionamentos (associação, herança, dependência). Ele não representa a ordem temporal dos eventos nem o fluxo de interações. Já o diagrama de sequência (seção "Diagrama de Sequência") foca no comportamento dinâmico: mostra a linha do tempo das trocas de mensagens entre objetos em um cenário específico, revelando quais métodos são chamados e em que ordem. Ele omite a estrutura detalhada das classes (atributos, tipos de relacionamento). Os dois diagramas são complementares porque, juntos, respondem a duas perguntas diferentes: "o que existe e como está organizado?" (estrutura) vs. "como os objetos interagem no tempo para realizar uma função?" (comportamento).
+ 
+### (b) Consequência prática 
+O diagrama de classes auxilia a tomar decisões relacionadas a estrutura do sistema: quais classes vão existir, qual é a responsabilidade de cada uma (os métodos que ela precisa ter) e como elas se relacionam, por exemplo, se uma classe é mais geral e outra mais específica, ou se uma classe contém a outra como parte dela. Isso é fundamental para definir a organização em camadas que escolhemos. Isso já orienta a projetar as interfaces entre as camadas de forma mais limpa. Já o diagrama de sequência ajuda a decidir a dinâmica: a ordem exata em que as coisas acontecem durante uma funcionalidade. Ele mostra quem chama quem primeiro, quais informações precisam ser passadas de um objeto para outro e quais métodos devem ficar visíveis para outros usarem ou devem ser mantidos apenas para uso interno da própria classe. Além disso, o diagrama de sequência ajuda a evitar um problema comum: quando um objeto chama outro que, em algum momento, chama o primeiro de volta, criando um ciclo confuso. Desenhando as setas de chamada, fica mais intuitivo quais ciclos seguir antes de programar e pode reorganizar a lógica para deixar tudo mais simples e fácil de manter na documentação também.
+  
+### (c) Aplicação ao UC01 
+O UC01 descreve o registro de um empréstimo textualmente, mas não mostra os objetos envolvidos nem a ordem das mensagens. Um diagrama de sequência mostraria que primeiro é preciso verificar se o equipamento existe e está disponível, só depois criar o empréstimo, então marcar o equipamento como ocupado e por fim enviar a notificação. Essa ordem não pode ser trocada. O diagrama também revelaria objetos como um controlador de empréstimos, um repositório de equipamentos, um repositório de empréstimos e um serviço de notificação. Com isso, fica claro quais métodos precisam existir: buscar equipamento por identificador, salvar empréstimo, atualizar disponibilidade e enviar e-mail. Esses detalhes ficam escondidos no texto do caso de uso.
+ 
+## Questão 2 — Arquitetura, design e os princípios de decomposição 
+ 
+### (a) Definições
+Coesão está relacionado ao princípio de responsabilidade única, que diz que uma classe deve ter apenas uma responsabilidade  que deve ser executada de forma satisfatória, ou seja, não deve  assumir responsabilidades que não são suas. Um módulo com alta coesão faz uma coisa só bem definida. Se uma classe cuida apenas de calcular multas, ela tem alta coesão; se também formata relatórios e envia e-mails, a coesão fica baixa. Já o coplamento é o quanto um módulo depende de outros. Baixo acoplamento significa que um módulo não precisa saber os detalhes internos de outro para funcionar. Ocultamento de informação é esconder os detalhes internos de um módulo e mostrar apenas o necessário. Quem usa o módulo só enxerga uma interface simples, e mudanças internas não afetam quem chama.
+
+### (b) Relações entre os princípios
+Ocultar informação ajuda a ter baixo acoplamento porque outros módulos não podem se agarrar a detalhes internos. Eles só usam a interface pública, que é estável. Ocultar informação também se relaciona com coesão: um módulo com uma única responsabilidade é mais fácil de esconder seus detalhes. Existe uma tensão: para aumentar a coesão, dividimos um módulo grande em vários pequenos, mas esses pequenos passam a conversar entre si, o que pode aumentar o acoplamento. O projetista precisa encontrar um equilíbrio, mantendo coesão alta sem fragmentar tanto que a comunicação vire uma teia difícil de entender.
+
+### (c) Aplicação ao projeto v2.0
+Na camada models, classes como Equipamento e Emprestimo têm alta coesão porque só representam dados. Ocultam detalhes de validação e não dependem de outras camadas, mantendo baixo acoplamento. Na camada services, a classe ServicoEmprestimos centraliza as regras de negócio. Ela não sabe onde os dados estão guardados nem como as notificações são enviadas; apenas chama interfaces simples. Isso mantém o acoplamento baixo. Na camada repository, classes como RepositorioEquipamentos escondem se os dados estão em lista, arquivo ou banco. Se a forma de armazenar mudar, só essa camada é alterada. Na camada interface, a classe CLI só cuida do menu e exibição, sem regras de negócio. O main.py apenas liga tudo, criando os objetos e passando uns para os outros.
+ 
+## Questão 3 — Crítica fundamentada à documentação do sistema legado 
+ 
+### (a) Pontos frágeis
+O primeiro ponto frágil é o uso de variáveis globais acessíveis de qualquer lugar, como as listas de equipamentos e empréstimos. Isso viola o ocultamento de informação porque os dados ficam expostos, e qualquer parte do sistema pode alterá-los. Também gera alto acoplamento, pois módulos sem relação acabam dependendo do mesmo estado global. O segundo ponto frágil é o cálculo de multa duplicado em dois métodos diferentes. A lógica que decide o valor da multa aparece tanto na devolução quanto na listagem de atrasados. Isso indica baixa coesão, pois a responsabilidade de calcular multa não está concentrada em um único local. Mudanças na regra precisariam ser aplicadas em dois lugares, aumentando o risco de erro.
+
+### (b) Ponto forte
+A documentação aponta que as funções usam print diretamente para mostrar resultados, misturando lógica de negócio com exibição. Essa observação é forte porque reconhece a violação da separação de responsabilidades. Segundo Valente, uma boa arquitetura mantém o domínio isolado da interface. A equipe da v1.0 percebeu que isso dificulta testes e reaproveitamento. Mesmo não resolvendo no código, a documentação já indica o caminho correto para a v2.0: separar a lógica da apresentação.
+
+### (c) Síntese
+A tabela de dívida técnica (DT01 a DT07) lista abertamente os problemas: ausência de camadas, variáveis globais, notificação misturada, cálculo duplicado, zero testes, múltiplos if/elif e dicionários sem tipagem. Essa transparência mostra que o desenvolvedor tinha consciência das fragilidades. Conforme Valente no Capítulo 1, dívida técnica não é vergonhosa quando assumida deliberadamente. Essa postura inaugura para a v2.0 uma atitude de planejamento e melhoria contínua. A equipe pode usar a lista como roteiro para priorizar refatorações, e as decisões arquiteturais (como o ADR‑001) são tomadas com base em evidências.
+ 
+## Questão 4 — Tipos como contratos: dicionários × classes
+
+### (a) Prevenção de erros
+Com dicionários, um erro de digitação na chave, como escrever "disponivel" com acento, não gera aviso na hora de escrever o código. O programa só quebra quando tenta acessar essa chave. Também é possível esquecer de incluir uma chave obrigatória, e o erro só aparece mais tarde. Não há garantia de que o valor seja do tipo esperado. Com classes, esses erros são detectados antes. Se você tenta acessar um atributo que não existe, o interpretador avisa. No momento de criar o objeto, você precisa passar todos os argumentos do construtor. Se a linguagem permite anotações de tipo, é possível garantir que um atributo seja sempre um booleano ou uma data. A classe funciona como um contrato que evita toda uma família de erros que com dicionários só apareceriam em produção.
+
+### (b) Capacidade de evolução
+Uma classe pode ganhar novos métodos sem prejudicar quem já a usa. Por exemplo, se hoje a classe Equipamento só tem atributos, amanhã você pode adicionar um método calcular_multa dentro dela. Os lugares que só liam os atributos continuam funcionando. Com dicionários, não dá para anexar comportamento. Para adicionar a mesma lógica, você teria que criar uma função separada que recebe o dicionário como parâmetro. Essa função fica em outro módulo, e qualquer mudança na estrutura do dicionário exige alterar todas as funções que o usam. A classe permite que comportamento e dados andem juntos, facilitando a evolução do sistema.
+
+### (c) Comunicação do design
+Valente argumenta que a clareza do modelo é parte do projeto, não apenas estilo. Quando você lê o nome Equipamento no código, entende imediatamente o que aquilo representa. A responsabilidade está implícita. Um dicionário genérico não comunica nada; você precisa ler todo o código para descobrir que a chave "nome" guarda o nome do equipamento. A classe funciona como documentação viva. Um novo programador pode olhar a definição da classe e saber exatamente quais dados e operações existem. Escolher classes em vez de dicionários melhora a comunicação entre a equipe e reduz interpretações erradas. É uma decisão de projeto que afeta diretamente a manutenibilidade do sistema.
