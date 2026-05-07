@@ -2,8 +2,6 @@
 
 ## Decomposição em camadas
 
-## Decomposição em camadas
-
 ### models/
 - **Equipamento** – Alta coesão: representa exclusivamente os dados de um equipamento, ocultando seus atributos internos e sem dependências externas.
 - **Emprestimo** – Mesmo princípio: estrutura os dados do empréstimo (datas, usuário, equipamento) sem conter lógica de negócio, facilitando a manutenção.
@@ -42,9 +40,9 @@ servico-->>main: False
 end 
 ``` 
 
-## Diagrama Mermaid para UC02
+# Diagrama Mermaid para UC02
 ![Imagem do Diagrama UC02](../docs/imagens/Diagrama_2.png)
 
 
-## Diagrama Mermaid para UC03
+# Diagrama Mermaid para UC03
 ![Imagem do Diagrama UC03](../docs/imagens/Diagrama_3.png)
