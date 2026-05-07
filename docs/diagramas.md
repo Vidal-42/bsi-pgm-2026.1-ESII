@@ -2,20 +2,49 @@
 
 ## Decomposição em camadas
 
-### models/
-- **Equipamento** – Localizada em `models/`, pois apresenta alta coesão: sua única responsabilidade é representar os dados de um equipamento (id, nome, tipo, disponível), ocultando seus atributos internos e sem depender de outras camadas.
+## Decomposição em camadas
 
-- **Emprestimo** – Fica em `models/` pela mesma razão: estrutura os dados de um empréstimo (datas, usuário, equipamento) sem conter lógica de negócio, o que mantém o acoplamento baixo e facilita a manutenção.
+### models/
+- **Equipamento** – Alta coesão: representa exclusivamente os dados de um equipamento, ocultando seus atributos internos e sem dependências externas.
+- **Emprestimo** – Mesmo princípio: estrutura os dados do empréstimo (datas, usuário, equipamento) sem conter lógica de negócio, facilitando a manutenção.
 
 ### services/
-- **ServicoEmprestimos** – Pertence a `services/` porque centraliza todas as regras de negócio (registrar empréstimo, processar devolução, calcular multa, listar atrasados), isolando essa lógica da interface e da persistência para que possa ser testada sem dependências externas.
+- **ServicoEmprestimo** – Centraliza todas as regras de negócio (registrar, devolver, calcular multa, listar atrasados). Isola essas regras da interface e da persistência, permitindo testes sem dependências externas. Baixo acoplamento porque depende apenas de interfaces de repositórios e do notificador.
+- **Notificador** – Responsabilidade única: enviar mensagens (e-mail) para os usuários. Ao separar esta classe, aumentamos a coesão do sistema e reduzimos o acoplamento do serviço principal.
 
 ### repositories/
-- **RepositorioEquipamentos** – Mora em `repositories/` para ocultar onde os dados estão guardados (se é lista em memória, arquivo ou banco de dados), permitindo trocar a forma de persistência sem afetar os serviços e mantendo baixo acoplamento.
-- **RepositorioEmprestimos** – Mesma justificativa: separa a responsabilidade de salvar, buscar e listar empréstimos, garantindo alta coesão e que a lógica de negócio não precise conhecer os detalhes de armazenamento.
-
-### interface/
-- **CLI** – Fica em `interface/` porque sua única função é interagir com o usuário pelo terminal (exibir menus, ler opções, mostrar resultados), sem conter nenhuma regra de empréstimo ou cálculo. Isso segue o princípio de separação de responsabilidades.
+- **RepositorioEquipamento** – Oculta onde os dados dos equipamentos estão armazenados (lista, arquivo, banco). Qualquer mudança na persistência fica confinada a esta classe, sem afetar os serviços.
+- **RepositorioEmprestimo** – Mesma justificativa para empréstimos. Ambos repositórios garantem baixo acoplamento com a lógica de negócio.
 
 ### main.py
-- **main** – Não é uma classe, mas o ponto de entrada do programa. Sua responsabilidade é apenas criar as instâncias necessárias (repositórios, serviços, interface) e ligar tudo, injetando as dependências. Isso mantém o restante do sistema desacoplado e centraliza a configuração.
+- **main (função principal)** – Ponto de entrada do programa. Não é uma classe, mas atua como orquestrador: cria instâncias dos repositórios, do notificador e do serviço, injeta as dependências e executa o menu CLI. Sua coesão é propositalmente baixa, pois apenas configura o sistema, separando essa responsabilidade das demais camadas.
+
+# Diagramas de Sequência
+
+```mermaid 
+sequenceDiagram 
+actor Atendente 
+participant main as main.py 
+participant servico as ServicoEmprestimo 
+participant repo as RepositorioEmprestimo 
+participant notif as Notificador 
+Atendente->>main: informa equip_id, nome, email, dias 
+main->>servico: registrar(equip_id, nome, email, dias) 
+servico->>repo: buscar_equipamento(equip_id) 
+repo-->>servico: Equipamento 
+alt equipamento disponível 
+servico->>repo: salvar_emprestimo(emprestimo) 
+servico->>repo: marcar_indisponivel(equip_id) 
+servico->>notif: notificar_emprestimo(email, data_devolucao) 
+servico-->>main: True 
+else equipamento indisponível 
+servico-->>main: False 
+end 
+``` 
+
+## Diagrama Mermaid para UC02
+![Imagem do Diagrama UC02](../docs/imagens/Diagrama_2.png)
+
+
+## Diagrama Mermaid para UC03
+![Imagem do Diagrama UC03](../docs/imagens/Diagrama_3.png)
